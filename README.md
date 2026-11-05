@@ -54,32 +54,21 @@ Internal memory (`M`, `T`, `C`, `FF`, …) is **kept** for intermediate ladder b
 
 ## Install
 
-### Option A — Home Assistant Node-RED addon
+### 1 — Node-RED Manage Palette (recommended)
 
-1. Copy the package folder to:
+1. Menu → **Manage palette** → **Install**
+2. Search: `node-red-contrib-ha-ladder`
+3. Install → restart Node-RED if asked
+
+Categories: **`ha-ladder`** / **`ha-ladder-sys`**.
+
+### 2 — Copy into Home Assistant Node-RED addon
+
+1. Put the package folder here:
    ```
    /addon_configs/<slug>_nodered/node_modules/node-red-contrib-ha-ladder
    ```
-   (or your addon’s `node_modules` path)
 2. **Restart** the Node-RED addon
-3. In the palette: categories **`ha-ladder`** and **`ha-ladder-sys`**
-
-### Option B — npm (when published)
-
-```bash
-cd ~/.node-red
-npm install node-red-contrib-ha-ladder
-```
-
-Restart Node-RED.
-
-### Option C — from this repo
-
-```bash
-git clone https://github.com/ricard0g0mes/node-red-contrib-ha-ladder.git
-cd ~/.node-red
-npm install /path/to/node-red-contrib-ha-ladder
-```
 
 ## Nodes (summary)
 
@@ -181,32 +170,21 @@ Memória interna (`M`, `T`, `C`, `FF`, …) **mantém-se** para bits intermédio
 
 ## Instalação
 
-### Opção A — Home Assistant Node-RED addon
+### 1 — Manage palette no Node-RED (recomendado)
 
-1. Copia a pasta do pacote para:
+1. Menu → **Manage palette** → **Install**
+2. Pesquisa: `node-red-contrib-ha-ladder`
+3. Instala → reinicia o Node-RED se pedir
+
+Categorias: **`ha-ladder`** / **`ha-ladder-sys`**.
+
+### 2 — Cópia directa no addon Node-RED do HA
+
+1. Coloca a pasta do pacote em:
    ```
    /addon_configs/<slug>_nodered/node_modules/node-red-contrib-ha-ladder
    ```
-   (ou o path `node_modules` do teu addon)
 2. **Restart** do addon Node-RED
-3. Na palette: categorias **`ha-ladder`** e **`ha-ladder-sys`**
-
-### Opção B — npm (quando publicado)
-
-```bash
-cd ~/.node-red
-npm install node-red-contrib-ha-ladder
-```
-
-Reinicia o Node-RED.
-
-### Opção C — a partir deste repo
-
-```bash
-git clone https://github.com/ricard0g0mes/node-red-contrib-ha-ladder.git
-cd ~/.node-red
-npm install /caminho/para/node-red-contrib-ha-ladder
-```
 
 ## Nodes (resumo)
 
