@@ -3,7 +3,7 @@
 ![platform](https://img.shields.io/badge/platform-Node--RED-red)
 ![platform](https://img.shields.io/badge/platform-Home%20Assistant-41BDF5)
 
-[![Buy me a coffee](https://cdn.buymeacoffee.com/buttons/v2/default-red.png)](https://www.buymeacoffee.com/ricard0g0mes)
+<a href="https://www.buymeacoffee.com/ricard0g0mes"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-red.png" alt="Buy me a coffee" width="200"></a>
 
 If you like my work and find it helpful, please support me with a small donation.
 
