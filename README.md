@@ -1,5 +1,12 @@
 # node-red-contrib-ha-ladder
 
+![platform](https://img.shields.io/badge/platform-Node--RED-red)
+![platform](https://img.shields.io/badge/platform-Home%20Assistant-41BDF5)
+
+[![Buy me a coffee](https://cdn.buymeacoffee.com/buttons/v2/default-red.png)](https://www.buymeacoffee.com/ricard0g0mes)
+
+If you like my work and find it helpful, please support me with a small donation.
+
 **[English](#english)** · **[Português](#português)**
 
 Ladder logic (IEC 61131-3 style) for **Node-RED**, using **Home Assistant entities** as digital inputs/outputs.
@@ -25,9 +32,7 @@ If you use ladder in Node-RED, please also support the upstream project: [redplc
 
 ## Author
 
-**Ricardo Gomes**  
-Website: https://ricardogomes.eu  
-If this saved you time/pain: https://buymeacoffee.com/ricard0g0mes
+**Ricardo Gomes** — https://ricardogomes.eu
 
 ---
 
