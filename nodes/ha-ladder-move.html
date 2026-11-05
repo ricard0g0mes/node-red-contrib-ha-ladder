@@ -1,0 +1,249 @@
+﻿<!--
+  Copyright 2024 Derya Y. (iot.HA Ladder@gmail.com).
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-move', {
+        category: 'ha-ladder',
+        color: '#A3A36A',
+        paletteLabel: 'hal-mov',
+        defaults: {
+            vartype1: { value: "#", required: true },
+            address1: { value: 0, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            index1:   { value: 0, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 63); } },
+            counter1: { value: "CV", required: true },
+            timer1:   { value: "ET", required: true },
+            timeu1:   { value: "s", required: true },
+            const1:   { value: 10, required: true, validate: function (v) { return !isNaN(Number(v)); } },
+            fconst1:  { value: "PI", required: true },
+
+            vartype2: { value: "MA", required: true },
+            address2: { value: 0, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            index2:   { value: 0, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 63); } },
+            counter2: { value: "PV", required: true },
+            timer2:   { value: "PT", required: true },
+
+            tofix:    { value: 2, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 20); } },
+            name:     { value: "" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-share",
+        inputLabels: "(EN) boolean",
+        outputLabels: ["(ENO) boolean"],
+        label: function () {
+            if (this.name)
+                return this.name;
+            
+            var out_txt = "mov ";
+            
+            switch(this.vartype1) {
+                default:   out_txt += this.vartype1 + this.address1 + "." + this.index1; break;
+                case "C":  out_txt += this.vartype1 + this.address1 + "." + this.counter1; break; 
+                case "T":  out_txt += this.vartype1 + this.address1 + "." + this.timer1; break; 
+                case "#":  out_txt += String(this.const1); break; 
+                case "#C": out_txt += this.fconst1; break;
+                case "#T": out_txt += this.const1 + this.timeu1; break; 
+            }
+            return out_txt;
+        },
+        labelStyle: function() { return this.name ? "node_label_italic" : ""; },
+        oneditprepare: function () {
+            function onvartype1(vartype) {
+                $("#node-input-address1").hide();
+                $("#div-point").hide();
+                $("#node-input-index1").hide();
+                $("#node-input-counter1").hide();
+                $("#node-input-timer1").hide();
+                $("#node-input-timeu1").hide();
+                $("#node-input-const1").hide();
+                $("#node-input-fconst1").hide();
+
+                switch (vartype) {
+                    default:
+                        $("#node-input-address1").show();
+                        $("#div-point").show();
+                        $("#node-input-index1").show();
+                        break;
+                    case "C":  
+                        $("#node-input-address1").show();
+                        $("#div-point").show();
+                        $("#node-input-counter1").show();
+                        break;
+                    case "T":  
+                        $("#node-input-address1").show();
+                        $("#div-point").show();
+                        $("#node-input-timer1").show();
+                        break;
+                    case "#":  
+                        $("#node-input-const1").show();
+                        break;
+                    case "#T": 
+                        $("#node-input-const1").show();
+                        $("#node-input-timeu1").show();
+                        break;
+                    case "#C": 
+                        $("#node-input-fconst1").show();
+                        break;
+                }
+            }
+
+            function onvartype2(vartype) {
+                $("#node-input-index2").hide();
+                $("#node-input-counter2").hide();
+                $("#node-input-timer2").hide();
+                $("#div-tofix").hide();
+
+                switch (vartype) {
+                    default:
+                        $("#node-input-index2").show();
+                        $("#div-tofix").show();
+                        break; 
+                    case "C":
+                        $("#node-input-counter2").show();
+                        break;
+                    case "T":
+                        $("#node-input-timer2").show();
+                        break;
+                }
+            }
+
+            $("#node-input-vartype1").on("change", function () { onvartype1(this.value); }).change();
+            $("#node-input-vartype2").on("change", function () { onvartype2(this.value); }).change();
+        },
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-move">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder Logic Move</b></label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-vartype1">Source</label>
+        <select type="text" id="node-input-vartype1" title="Move From" style="width: auto;">
+            <option value="IA">IA</option>
+            <option value="QA">QA</option>
+            <option value="MA">MA</option>
+            <option value="C">C</option>
+            <option value="T">T</option>
+            <option value="#">#</option>
+            <option value="#C">#C</option>
+            <option value="#T">#T</option>
+        </select>
+        <input id="node-input-address1" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+        <label id="div-point" style="width: auto;"><b>.</b></label>
+        <input id="node-input-index1" title="Index" value=0 input type="number" min="0" max="63" required style="width: auto;">
+        <select type="text" id="node-input-counter1" title="Counter Value" style="width: auto;">
+            <option value="CV">CV</option>
+            <option value="PV">PV</option>
+        </select>
+        <select type="text" id="node-input-timer1" title="Timer Value" style="width: auto;">
+            <option value="ET">ET</option>
+            <option value="PT">PT</option>
+        </select>
+        <input id="node-input-const1" title="Const Value" value=10 input type="text" required style="width: auto;">
+        <select type="text" id="node-input-timeu1" title="Time Unit" style="width: auto;">
+            <option value="ms">milisec.</option>
+            <option value="s">seconds</option>
+            <option value="m">minutes</option>
+            <option value="h">hours</option>
+            <option value="d">days</option>
+        </select>
+        <select type="text" id="node-input-fconst1" title="Math Constant" style="width: auto;">
+            <option value="PI">PI</option>
+            <option value="E">E</option>
+            <option value="LN2">LN2</option>
+            <option value="LN10">LN10</option>
+            <option value="LOG2E">LOG2E</option>
+            <option value="LOG10E">LOG10E</option>
+            <option value="SQRT2">SQRT2</option>
+            <option value="SQRT1_2">SQRT1_2</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-vartype2">Target</label>
+        <select type="text" id="node-input-vartype2" title="Move To" style="width: auto;">
+            <option value="QA">QA</option>
+            <option value="MA">MA</option>
+            <option value="C">C</option>
+            <option value="T">T</option>
+        </select>
+        <input id="node-input-address2" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+        <label style="width: auto;"><b>.</b></label>
+        <input id="node-input-index2" title="Index" value=0 input type="number" min="0" max="63" required style="width: auto;">
+        <select type="text" id="node-input-counter2" title="Counter" style="width: auto;">
+            <option value="PV">PV</option>
+        </select>
+        <select type="text" id="node-input-timer2" title="Timer" style="width: auto;">
+            <option value="PT">PT</option>
+        </select>
+    </div>
+    <div id="div-tofix" class="form-row">
+        <label for="node-input-tofix">Fix-Decimal</label>
+        <input id="node-input-tofix" title="Number Decimal" value=0 input type="number" min="0" max="20" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" id="node-input-name" title="Give this node a name" placeholder="Name" style="width: auto;">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-move">
+    <p>HA Ladder Logic Move.</p>
+    <h3><b>Input:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>EN: Enable Input<dd>
+        <dd><b>True</b> performs move<dd>
+    </dl>
+    <h3><b>Output:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>ENO: Enable Output<dd>
+    </dl>
+    <h3><b>Variable (Source):</b></h3>
+        <dl class="message-properties">
+            <dt><b>IA</b> Analog-Input<span class="property-type">number</span></dt>
+            <dt><b>QA</b> Analog-Output<span class="property-type">number</span></dt>
+            <dt><b>MA</b> Analog-Memory<span class="property-type">number</span></dt>
+            <dt><b>T</b> Timer<span class="property-type">number</span></dt>
+            <dd><b>.ET</b> Elapsed Time in ms.</dd>
+            <dd><b>.PT</b> Timer Preset in ms.</dd>
+            <dt><b>C</b> Counter<span class="property-type">number</span></dt>
+            <dd><b>.CV</b> Value</dd>
+            <dd><b>.PV</b> Preset</dd>
+            <dt><b>#</b> Number-Constant<span class="property-type">number</span></dt>
+            <dt><b>#C</b> Math-Constant<span class="property-type">number</span></dt>
+            <dt><b>#T</b> Timer-Constant<span class="property-type">number</span></dt>
+        </dl>
+    <h3><b>Variable (Target):</b></h3>
+        <dl class="message-properties">
+            <dt><b>QA</b> Analog-Output<span class="property-type">number</span></dt>
+            <dt><b>MA</b> Analog-Memory<span class="property-type">number</span></dt>
+            <dt><b>T</b> Timer<span class="property-type">number</span></dt>
+            <dd><b>.PT</b> Preset in ms.</dd>
+            <dt><b>C</b> Counter<span class="property-type">number</span></dt>
+            <dd><b>.PV</b> Preset</dd>
+        </dl>
+    <h3><b>Detail:</b></h3>
+    <p>
+        Moves (copies) source to traget.<br>
+        Variables must exist.<br>
+        Timer-Constant is converted to ms.<br>
+        Fix-Decimal rounds digits after decimal point.<br>
+        Status icon shows the output payload.<br>
+        Status text shows Target.<br>
+    </p>
+</script>

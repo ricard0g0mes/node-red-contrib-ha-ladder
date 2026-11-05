@@ -1,0 +1,123 @@
+﻿<!--
+  Copyright 2024 Derya Y. (iot.HA Ladder@gmail.com).
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-function', {
+        category: 'ha-ladder',
+        color: '#8FA37A',
+        paletteLabel: 'hal-fn',
+        defaults: {
+            operation: { value: "NOP", required: true },
+        },
+        inputs: 1,
+        outputs: 1,
+        inputLabels: "boolean",
+        outputLabels: ["boolean"],
+        icon: function () {
+            switch (this.operation) {
+                default:
+                case "NOP": return "font-awesome/fa-ellipsis-h";
+                case "OR":  return "font-awesome/fa-plus-square";
+                case "NOT": return "font-awesome/fa-ban";
+                case "AND": return "font-awesome/fa-link";
+                case "XOR": return "font-awesome/fa-random";
+                case "P_TRIGGER": return "font-awesome/fa-level-up";
+                case "N_TRIGGER": return "font-awesome/fa-level-down";
+            }
+        },
+        inputLabels: "(IN) boolean",
+        outputLabels: ["(OUT) boolean"],
+        label: function () { return this.operation; },
+        labelStyle: function() { return "node_label_italic"; },
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-function">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder Logic Digital Function</b></label>
+    </div>
+    <div id="div-operation" class="form-row">
+        <label for="node-input-operation">Operation</label>
+        <select type="text" id="node-input-operation" style="width: auto;">
+            <option value="NOP">NOP</option>
+            <option value="OR">OR</option>
+            <option value="NOT">NOT</option>
+            <option value="AND">AND</option>
+            <option value="XOR">XOR</option>
+            <option value="P_TRIGGER">P_TRIGGER</option>
+            <option value="N_TRIGGER">N_TRIGGER</option>
+        </select>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-function">
+    <p>HA Ladder Logic Digital Function.</p>
+    <h3><b>Input:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>IN<dd>
+    </dl>
+    <h3><b>Output:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>OUT<dd>
+    </dl>
+    <p>
+        Implements digital functions.<br>
+        AND, XOR operation needs min.<br>
+        2 nodes wired on input for valid work.<br>
+        Status icon shows the output payload.<br>
+        <br>
+        <b>Operations:</b><br>
+        <ul>
+            <li><b>NOP</b> No Operation.<br>
+                Logical OR inputs.<br>
+                Sends <b>True</b> if any of inputs are <b>True</b>.<br> 
+                Else send <b>False</b>.
+            </li>
+            <li><b>OR</b> Logical OR.<br>
+                Logical OR inputs.<br>
+                Sends <b>True</b> if any of inputs are <b>True</b>.<br> 
+                Else send <b>False</b>.
+            </li>
+            <li><b>NOT</b> Negated.<br>
+                Negated Logical OR inputs.<br>
+                Sends <b>False</b> if any of inputs are <b>True</b>.<br> 
+                Else send <b>True</b>.
+            </li>
+            <li><b>AND</b> Logical AND.<br>
+                Logical AND inputs.<br>
+                Sends <b>True</b> if all of inputs are <b>True</b>.<br> 
+                Else send <b>False</b>.
+            </li>
+            <li><b>XOR</b> Logical XOR.<br>
+                Logical XOR inputs.<br>
+                Sends <b>True</b> if any of inputs are different.<br> 
+                Else send <b>False</b>.
+            </li>
+            <li><b>P_TRIGGER:</b> Positve Transition Sense.<br>
+                If inputs change from <b>False</b> to <b>True</b><br> 
+                sends <b>True</b> for one cycle.<br>
+                Else send <b>False</b>.
+            </li>
+            <li><b>N_TRIGGER:</b> Negative Transition Sense.<br>
+                If inputs change from <b>True</b> to <b>False</b><br> 
+                sends <b>True</b> for one cycle.<br>
+                Else send <b>False</b>.
+            </li>
+        </ul>
+    </p>
+</script>

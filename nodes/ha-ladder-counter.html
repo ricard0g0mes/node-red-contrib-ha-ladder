@@ -1,0 +1,145 @@
+﻿<!--
+  Copyright 2024 Derya Y. (iot.HA Ladder@gmail.com).
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-counter', {
+        category: 'ha-ladder',
+        color: '#6A8FA3',
+        paletteLabel: 'hal-cnt',
+        defaults: {
+            operation:  { value: "CTU", required: true },
+            address:    { value: 0, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            preset:     { value: 10, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 1); } },
+            persistent: { value: 0, required: true },
+            tpers:      { value: 20, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 200); } },
+            name:       { value: "" },
+            outputs:    { value: 1 },
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-sort-numeric-asc",
+        align: 'left',
+        inputLabels: function() { return (this.operation == "CTD") ? "(CD) boolean" : "(CU) boolean"; },
+        outputLabels: function(i) {
+            if (this.operation == "CTUD")
+                return (i == 0) ? "(QU) boolean" : "(QD) boolean";
+            return (this.operation == "CTD") ? "(QD) boolean" : "(QU) boolean"; 
+        },
+        label: function () {
+            this.outputs = (this.operation == "CTUD") ? 2 : 1;
+            return this.name || (this.operation + " " + this.preset); 
+        },
+        labelStyle: function() { return this.name ? "node_label_italic" : ""; },
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-counter">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder Logic Counter Coil</b></label>
+    </div>
+    <div id="div-operation" class="form-row">
+        <label for="node-input-operation">Operation</label>
+        <select type="text" id="node-input-operation" style="width: auto;">
+            <option value="CTU">Count Up (CTU)</option>
+            <option value="CTD">Count Down (CTD)</option>
+            <option value="CTUD">Count Up/Down (CTUD)</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label>Counter</label>
+        <label style="width: auto;"><b>C</b></label>
+        <input id="node-input-address" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-preset">Preset</label>
+        <input id="node-input-preset" title="Preset" value=10 input type="number" min="1" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" id="node-input-name" title="Give this node a name" title="Name" style="width: auto;">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-counter">
+    <p>HA Ladder Logic Counter Coil.</p>
+    <h3><b>Input:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>CU: Count up for CTU and CTUD<dd>
+        <dd>CD: Count down for CTD<dd>
+    </dl>
+    <h3><b>Output:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>QU: Output for CTU and CTUD<dd>
+        <dd>QD: Output for CTD<dd>
+    </dl>
+    <h3><b>Output-2:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>QD: Output for CTUD<dd>
+    </dl>
+    <h3><b>Variable (Counter):</b></h3>
+        <dl class="message-properties">
+            <dt><b>C</b> Counter-Value<span class="property-type">number</span></dt>
+            <dd><b>.CV</b> Counter Value (readonly)</dd>
+            <dd><b>.PV</b> Preset Value</dd>
+            <dt><b>C</b> Counter-Status <span class="property-type">boolean</span></dt>
+            <dd><b>.QU</b> Status <b>.CV</b> >= <b>.PV</b></dd>
+            <dd><b>.QD</b> Status <b>.CV</b> <= <b>0</b></dd>
+            <dt><b>C</b> Counter-Control<span class="property-type">boolean</span></dt>
+            <dd><b>.R</b> Reset <b>.CV</b> to <b>0</b></dd>
+            <dd><b>.LD</b> Load <b>.CV</b> from <b>.PV</b></dd>
+            <dd><b>.CD</b> Count Down (only CTUD)</dd>
+        </dl>
+    <h3><b>Detail:</b></h3>
+    <p>
+        This node counts up/down.<br>
+        Variable is created and must unique.<br>
+        If <b>.PV</b> changed to <= 0<br>
+        then <b>.PV</b> is set to entered preset.<br>
+        Status text shows <b>.CV</b>.<br>
+        <br>
+        <b>Operation:</b>
+        <ul>
+            <li><b>Count Up (CTU):</b><br>
+                1. <b>.R</b> <b>True</b> sets <b>.CV</b> to <b>0</b>.<br>
+                2. Positve transition on input payload,<br> 
+                   increments <b>.CV</b> by one.<br>
+                Output payload is <b>.QU</b><br>
+                Status icon shows <b>.QU</b>.<br>
+            </li>
+            <li><b>Count Down (CTD):</b><br>
+                1. <b>.LD</b> <b>True</b> sets <b>.CV</b> to <b>.PV</b>.<br>
+                2. Positve transition on input payload,<br> 
+                   decrements <b>.CV</b> by one.<br>
+                Output payload is <b>.QD</b><br>
+                Status icon shows <b>.QD</b>.<br>
+            </li>
+            <li><b>Count Up/Down (CTUD):</b><br>
+                1. <b>.R</b> <b>True</b> sets <b>.CV</b> to <b>0.</b><br>
+                2. <b>.LD</b> <b>True</b> sets <b>.CV</b> to<b>.PV</b>.<br>
+                3. Positve transition on input payload,<br> 
+                   increments <b>.CV</b> by one.<br>
+                4. Positve transition on <b>.CD</b>,<br> 
+                   decrements <b>.CV</b> is by one.<br>
+                Output payload Output-1 is <b>.QU</b><br>
+                Output payload Output-2 is <b>.QD</b><br>
+                Status icon shows <b>.QU</b>.<br>
+            </li>
+        </ul>
+    </p>
+</script>

@@ -1,0 +1,107 @@
+﻿<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-coil', {
+        category: 'ha-ladder',
+        paletteLabel: 'hal-out',
+        color: '#C4896A',
+        defaults: {
+            operation: { value: "ST", required: true },
+            source: { value: "ha", required: true },
+            server: { value: "", type: "server", required: false },
+            entity_id: { value: "" },
+            vartype: { value: "M", required: true },
+            address: { value: 0, required: true },
+            index: { value: 0, required: true },
+            counter: { value: "R", required: true },
+            timer: { value: "R", required: true },
+            fflop: { value: "R", required: true },
+            name: { value: "" }
+        },
+        inputs: 1,
+        outputs: 1,
+        align: 'left',
+        inputLabels: "(IN) boolean",
+        outputLabels: ["(OUT) boolean"],
+        icon: function () {
+            switch (this.operation) {
+                case "SN": return "font-awesome/fa-circle-o";
+                case "R": return "font-awesome/fa-times-circle";
+                case "S": return "font-awesome/fa-check-circle";
+                case "P": return "font-awesome/fa-arrow-circle-up";
+                case "N": return "font-awesome/fa-arrow-circle-down";
+                default: return "font-awesome/fa-bolt";
+            }
+        },
+        label: function () {
+            if (this.name) return this.name;
+            if (this.source === "ha") return this.entity_id || "coil";
+            return "coil";
+        },
+        labelStyle: function () { return this.name ? "node_label_italic" : ""; },
+        oneditprepare: function () {
+            function sync() {
+                const src = $("#node-input-source").val();
+                if (src === "ha") {
+                    $(".ha-only").show();
+                    $(".mem-only").hide();
+                } else {
+                    $(".ha-only").hide();
+                    $(".mem-only").show();
+                }
+            }
+            $("#node-input-source").on("change", sync);
+            sync();
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-coil">
+    <div class="form-row">
+        <label style="width:100%;border-bottom:2px solid #000"><b>HA Ladder Coil</b></label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation">Operation</label>
+        <select id="node-input-operation">
+            <option value="ST">Store</option>
+            <option value="SN">Store Negated</option>
+            <option value="R">Reset</option>
+            <option value="S">Set</option>
+            <option value="P">Positive Transition</option>
+            <option value="N">Negative Transition</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-source">Target</label>
+        <select id="node-input-source">
+            <option value="ha">Home Assistant entity</option>
+            <option value="mem">Internal M/C/T/FF</option>
+        </select>
+    </div>
+    <div class="form-row ha-only">
+        <label for="node-input-server">HA Server</label>
+        <input type="text" id="node-input-server">
+    </div>
+    <div class="form-row ha-only">
+        <label for="node-input-entity_id">Entity</label>
+        <input type="text" id="node-input-entity_id" placeholder="light.luz_escritorio / switch.x / input_boolean.y">
+    </div>
+    <div class="form-row mem-only">
+        <label for="node-input-vartype">Memory</label>
+        <select id="node-input-vartype" style="width:auto">
+            <option value="M">M</option>
+            <option value="C">C</option>
+            <option value="T">T</option>
+            <option value="FF">FF</option>
+        </select>
+        <input id="node-input-address" type="number" min="0" max="999" style="width:auto">
+        <b>.</b>
+        <input id="node-input-index" type="number" min="0" max="63" style="width:auto">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-coil">
+    <p>Ladder coil. Target = HA entity (<code>turn_on</code>/<code>turn_off</code>) or internal memory.</p>
+</script>

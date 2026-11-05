@@ -1,0 +1,126 @@
+﻿<!--
+  Copyright 2024 Derya Y. (iot.HA Ladder@gmail.com).
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-flipflop', {
+        category: 'ha-ladder',
+        color: '#9A7A8F',
+        paletteLabel: 'hal-ff',
+        defaults: {
+            operation:  { value: "SR", required: true },
+            address:    { value: 0, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            tpers:      { value: 0, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 200); } },
+            name:       { value: "" },
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: function () {
+            switch (this.operation) {
+                default:
+                case "SR": return "font-awesome/fa-exchange";
+                case "RS": return "font-awesome/fa-retweet";
+                case "L": return "font-awesome/fa-lock";
+                case "T": return "font-awesome/fa-refresh";
+            }
+        },
+        align: 'left',
+        inputLabels: function() {
+            switch(this.operation) {
+                default: return "(S) boolean";
+                case "R": return "(R) boolean";
+                case "L":
+                case "T": return "(CLK) boolean";
+            }
+        },
+        outputLabels: ["(Q) boolean"],
+        label: function () { return this.name || "flipflop"; }, 
+        labelStyle: function() { return this.name ? "node_label_italic" : ""; },
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-flipflop">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder Logic FlipFlop</b></label>
+    </div>
+    <div id="div-operation" class="form-row">
+        <label for="node-input-operation">Operation</label>
+        <select type="text" id="node-input-operation" style="width: auto;">
+            <option value="SR">Set-Dominant (SR)</option>
+            <option value="RS">Reset-Dominant (RS)</option>
+            <option value="L">Latch (L)</option>
+            <option value="T">Toggle (T)</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label>FlipFlop</label>
+        <label style="width: auto;"><b>FF</b></label>
+        <input id="node-input-address" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" id="node-input-name" placeholder="Name" style="width: auto;">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-flipflop">
+    <p>HA Ladder Logic Flip-Flop.</p>
+    <h3><b>Input:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>S: Set Input for SR<dd>
+        <dd>R: Reset Input for RS<dd>
+    </dl>
+    <h3><b>Output:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>Q: Output<dd>
+    </dl>
+    <h3><b>Variable (FlipFlop):</b></h3>
+        <dl class="message-properties">
+            <dt><b>FF</b> FlipFlop<span class="property-type">boolean</span></dt>
+            <dd><b>.R</b> Reset</dd>
+            <dd><b>.S</b> Set</dd>
+            <dd><b>.Q</b> Output</dd>
+        </dl>
+    <h3><b>Detail:</b></h3>
+    <p>
+        Store digital states.<br>
+        Each FlipFlop has its order priority.<br>
+        Variable is created and must unique.<br>
+        Status icon shows output.<br>
+        Status text shows the variable.<br>
+        <br>
+        <b>Operation:</b>
+        <ul>
+            <li><b>Set-Dominant (SR):</b><br>
+                1. Input payload <b>True</b> sets <b>.Q</b> to <b>True</b>.<br>
+                2. <b>.R</b> <b>True</b> sets <b>.Q</b> to <b>False</b>.  
+            </li>
+            <li><b>Reset-Dominant (RS):</b><br>
+                1. Input payload <b>True</b> sets <b>.Q</b> to <b>False</b>.<br>
+                2. <b>.S</b> <b>True</b> sets <b>.Q</b> to <b>True</b>.  
+            </li>
+            <li><b>Latch (L):</b><br>
+                1. <b>.R</b> <b>True</b> sets <b>.Q</b> to <b>False</b>.<br>  
+                2. Input positive transition sets <b>.Q</b> to <b>True</b>.<br>
+            </li>
+            <li><b>Toggle (T):</b><br>
+                1. <b>.R</b> <b>True</b> sets <b>.Q</b> to <b>False</b>.<br>  
+                2. Input positive transition toggles <b>.Q</b>.
+            </li>
+        </ul>
+    </p>
+</script>

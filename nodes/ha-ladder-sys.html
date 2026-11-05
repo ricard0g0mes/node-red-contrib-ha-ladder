@@ -1,0 +1,243 @@
+﻿<!--
+  Copyright 2024 Derya Y. (iot.HA Ladder@gmail.com).
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!-- inject -->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-sys-inject', {
+        category: 'ha-ladder-sys',
+        paletteLabel: 'hal-scan',
+        color: '#8A9AAA',
+        defaults: {
+            sdelay:  { value: 200, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 5) && (v <= 10000); }},
+            tupdate: { value: 10, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 1) && (v <= 5000); } },
+            outputs: { value: 2,   required: true, validate: function(v) { return RED.validators.number(v) && (v >= 1) && (v <= 55); }},
+        },
+        inputs: 1,
+        outputs: 2,
+        align: 'right',
+        inputLabels: "run/stop boolean",
+        outputLabels: function(i) { return "out-" + i + " True"; },
+        icon: "font-awesome/fa-play-circle",
+        label: "true ↻ ↓",
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-sys-inject">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder Sequential Inject</b></label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-sdelay">Start-Delay</label>
+        <input id="node-input-sdelay" title="Start Delay (ms)" input type="number" min="5" max="10000" required style="width: auto;">
+        <label for="node-input-sdelay"> ms</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-tupdate">Output-Cycle</label>
+        <input id="node-input-tupdate" input type="number" min="1" max="5000" required style="width: auto;">
+        <label for="node-input-tupdate"> ms</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-outputs">Outputs</label>
+        <input id="node-input-outputs" title="Number Rungs" input type="number" min="1" max="55" required style="width: auto;">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-sys-inject">
+    <p>HA Ladder Sequential Inject.</p>
+    <h3><b>Input:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd><b>False</b> stops cycle (stop).<dd>
+        <dd><b>True</b> starts cycle (run).<dd>
+    </dl>
+    <h3><b>Outputs (1..n):</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>Sends always <b>True</b><dd>
+        <dt>outn <span class="property-type">number</span></dt>
+        <dd>Output number</b><dd>
+    </dl>
+    <h3><b>Details:</b></h3>
+    <p>
+        This node is a sequential inject node.<br>
+        The number of outputs (rungs) can be<br>
+        selected from 1..55.<br>
+        <b>True</b> is send in sequence,<br>
+        starting on first output.<br>
+        This ensures the sequence of operation.<br>
+        Start-Delay delays start of cycle on start.<br>
+        Connect HA Ladder modules on first output.<br>
+        Connect ladder logic nodes<br>
+        on second and next outputs.<br>
+        Status icon shows run/stop status.<br>
+        Status text shows cycle time.<br>
+    </p>
+</script>
+
+<!-- onstart -->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-sys-onstart', {
+        category: 'ha-ladder-sys',
+        color: '#9AA8B0',
+        paletteLabel: 'hal-boot',
+        defaults: {
+            sdelay:  { value: 100, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 5) && (v <= 10000); }},
+        },
+        inputs: 0,
+        outputs: 1,
+        outputLabels: ["OUT boolean"],
+        icon: "font-awesome/fa-power-off",
+        label: "onstart",
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-sys-onstart">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder On Start</b></label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-sdelay">Init-Delay</label>
+        <input id="node-input-sdelay" title="Start Delay (ms)" input type="number" min="5" max="10000" required style="width: auto;">
+        <label for="node-input-sdelay"> ms</label>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-sys-onstart">
+    <p>HA Ladder On System Start.</p>
+    <h3><b>Output:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+    </dl>
+    <h3><b>Details:</b></h3>
+    <p>
+        On system start one <b>True</b> message is send<br>
+        after a delay time.<br>
+        This can be used for initializing data.<br>
+    </p>
+</script>
+
+<!-- first scan -->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-sys-firstscan', {
+        category: 'ha-ladder-sys',
+        color: '#9AA8B0',
+        paletteLabel: 'hal-1st',
+        defaults: {
+        },
+        inputs: 1,
+        outputs: 1,
+        inputLabels: "IN boolean",
+        outputLabels: ["OUT boolean"],
+        icon: "font-awesome/fa-step-forward",
+        label: "firstscan",
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-sys-firstscan">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder First Scan</b></label>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-sys-firstscan">
+    <p>HA Ladder First Scan.</p>
+    <h3><b>Input:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+    </dl>
+    <h3><b>Output:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+    </dl>
+    <h3><b>Details:</b></h3>
+    <p>
+        On first scan once <b>True</b> message is send.<br>
+        Add this node to the rung output.<br>
+        This can be used for initializing data.<br>
+    </p>
+</script>
+
+<!-- rail -->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-sys-rail', {
+        category: 'ha-ladder-sys',
+        color: '#9AA8B0',
+        paletteLabel: 'hal-rail',
+        defaults: {
+            rtype: { value: "1", required: true },
+            outputs: { value: 1 },
+            name: { value: "" }
+        },
+        inputs: 1,
+        outputs: 1,
+        inputLabels: "IN any",
+        outputLabels: ["OUT any"],
+        align: 'left',
+        icon: function() { return this.rtype == "0" ? "font-awesome/fa-minus" : "font-awesome/fa-minus-square"; },
+        label: function() {
+            this.outputs = (this.rtype == "0") ? 0 : 1; 
+            return this.name || (this.rtype == "0" ? "neutral" : "live"); 
+        },
+        labelStyle: function() { return this.name ? "node_label_italic" : ""; },
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-sys-rail">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder Rail</b></label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-rtype">Rail-Type</label>
+        <select type="text" id="node-input-rtype" title="Type of rail" style="width: auto;">
+            <option value="0">Neutral</option>
+            <option value="1">Live</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" id="node-input-name" title="Give this node a name" placeholder="Name" style="width: auto;">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-sys-rail">
+    <p>HA Ladder Rail.</p>
+    <h3><b>Input:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dt>outn <span class="property-type">number</span></dt>
+        <dd>Output number<dd>
+    </dl>
+    <h3><b>Output:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Same as input<dd>
+        <dd>Only for live rail<dd>
+    </dl>
+    <h3><b>Details:</b></h3>
+    <p>
+        Shows a ladder logic rail.<br>
+        Rail can be live or neutral.<br>
+        This node has no function and<br>
+        is for documentary purposes only.<br>
+        Connect live type on inject output.<br>
+        Connect neutral type on end of rungs.<br>
+        Status text shows output number.<br>
+    </p>
+</script>

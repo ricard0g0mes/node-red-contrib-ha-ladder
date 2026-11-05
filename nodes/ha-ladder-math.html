@@ -1,0 +1,485 @@
+﻿<!--
+  Copyright 2024 Derya Y. (iot.HA Ladder@gmail.com).
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-math', {
+        category: 'ha-ladder',
+        color: '#6AA38F',
+        paletteLabel: 'hal-math',
+        defaults: {
+            operation: { value: "add", required: true },
+
+            vartype: { value: "MA", required: true },
+            address: { value: 0, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            index:   { value: 0, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 63); } },
+            counter: { value: "PV", required: true },
+            timer:   { value: "PT", required: true },
+
+            vartype1: { value: "#", required: true },
+            address1: { value: 0, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            index1:   { value: 0, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 63); } },
+            counter1: { value: "CV", required: true },
+            timer1:   { value: "ET", required: true },
+            timeu1:   { value: "s", required: true },
+            const1:   { value: 5, required: true, validate: function (v) { return !isNaN(Number(v)); } },
+            fconst1:  { value: "PI", required: true },
+
+            vartype2: { value: "#", required: true },
+            address2: { value: 0, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            index2:   { value: 0, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 63); } },
+            counter2: { value: "CV", required: true },
+            timer2:   { value: "ET", required: true },
+            timeu2:   { value: "s", required: true },
+            const2:   { value: 10, required: true, validate: function (v) { return !isNaN(Number(v)); } },
+            fconst2:  { value: "PI", required: true },
+
+            tofix:    { value: 2, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 20); } },
+            name:     { value: "" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-superscript", 
+        inputLabels: "(EN) boolean",
+        outputLabels: ["(ENO) boolean"],
+        label: function () {
+            if (this.name)
+                return this.name;
+            
+            var out_txt = this.operation + " (";
+
+            switch(this.vartype1) {
+                default:   out_txt += this.vartype1 + this.address1 + "." + this.index1; break;
+                case "C":  out_txt += this.vartype1 + this.address1 + "." + this.counter1; break;
+                case "T":  out_txt += this.vartype1 + this.address1 + "." + this.timer1; break;
+                case "#":  out_txt += String(this.const1); break;
+                case "#C": out_txt += this.fconst1; break;
+                case "#T": out_txt += this.const1 + this.timeu1; break;
+            }
+
+            switch (this.operation) {
+                    case "add":
+                    case "sub":
+                    case "mul":
+                    case "div":
+                    case "mod":
+                    case "max":
+                    case "min":
+                    case "pow":
+                    case "rnd2":
+                        out_txt += ", ";
+                        switch(this.vartype2) {
+                            default:   out_txt += this.vartype2 + this.address2 + "." + this.index2; break;
+                            case "C":  out_txt += this.vartype2 + this.address2 + "." + this.counter2; break;
+                            case "T":  out_txt += this.vartype2 + this.address2 + "." + this.timer2; break;
+                            case "#":  out_txt += String(this.const2); break;
+                            case "#C": out_txt += this.fconst2; break;
+                            case "#T": out_txt += this.const2 + this.timeu2; break; 
+                        }
+                }
+
+            out_txt += ")";
+
+            return out_txt;
+        },
+        labelStyle: function() { return this.name ? "node_label_italic" : ""; },
+        oneditprepare: function () {
+            function onoperation(operation) {
+                $("#div-operand2").hide();
+
+                switch (operation) {
+                    case "add":
+                    case "sub":
+                    case "mul":
+                    case "div":
+                    case "mod":
+                    case "max":
+                    case "min":
+                    case "pow":
+                    case "rnd2":
+                        $("#div-operand2").show();
+                }
+            }
+
+            function onvartype(vartype) {
+                $("#node-input-index").hide();
+                $("#node-input-counter").hide();
+                $("#node-input-timer").hide();
+                $("#div-tofix").hide();
+
+                switch (vartype) {
+                    default:
+                        $("#node-input-index").show();
+                        $("#div-tofix").show();
+                        break;
+                    case "C":  
+                        $("#node-input-counter").show();
+                        break;
+                    case "T":  
+                        $("#node-input-timer").show();
+                        break;
+                }
+            }
+
+            function onvartype1(vartype) {
+                $("#node-input-address1").hide();
+                $("#div-point1").hide();
+                $("#node-input-index1").hide();
+                $("#node-input-counter1").hide();
+                $("#node-input-timer1").hide();
+                $("#node-input-timeu1").hide();
+                $("#node-input-const1").hide();
+                $("#node-input-fconst1").hide();
+
+                switch (vartype) {
+                    default:
+                        $("#node-input-address1").show();
+                        $("#div-point1").show();
+                        $("#node-input-index1").show();
+                        break;
+                    case "C":  
+                        $("#node-input-address1").show();
+                        $("#div-point1").show();
+                        $("#node-input-counter1").show();
+                        break;
+                    case "T":  
+                        $("#node-input-address1").show();
+                        $("#div-point1").show();
+                        $("#node-input-timer1").show();
+                        break;
+                    case "#":  
+                        $("#node-input-const1").show();
+                        break;
+                    case "#T": 
+                        $("#node-input-const1").show();
+                        $("#node-input-timeu1").show();
+                        break;
+                    case "#C": 
+                        $("#node-input-fconst1").show();
+                        break;
+                }
+            }
+
+            function onvartype2(vartype) {
+                $("#node-input-address2").hide();
+                $("#div-point2").hide();
+                $("#node-input-index2").hide();
+                $("#node-input-counter2").hide();
+                $("#node-input-timer2").hide();
+                $("#node-input-timeu2").hide();
+                $("#node-input-const2").hide();
+                $("#node-input-fconst2").hide();
+
+                switch (vartype) {
+                    default:
+                        $("#node-input-address2").show();
+                        $("#div-point2").show();
+                        $("#node-input-index2").show();
+                        break;
+                    case "C":  
+                        $("#node-input-address2").show();
+                        $("#div-point2").show();
+                        $("#node-input-counter2").show();
+                        break;
+                    case "T":  
+                        $("#node-input-address2").show();
+                        $("#div-point2").show();
+                        $("#node-input-timer2").show();
+                        break;
+                    case "#":  
+                        $("#node-input-const2").show();
+                        break;
+                    case "#T": 
+                        $("#node-input-const2").show();
+                        $("#node-input-timeu2").show();
+                        break;
+                    case "#C": 
+                        $("#node-input-fconst2").show();
+                        break;
+                }
+            }
+
+            $("#node-input-operation").on("change", function () { onoperation(this.value); }).change();
+            $("#node-input-vartype").on("change", function () { onvartype(this.value); }).change();
+            $("#node-input-vartype1").on("change", function () { onvartype1(this.value); }).change();
+            $("#node-input-vartype2").on("change", function () { onvartype2(this.value); }).change();
+        },
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-math">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder Logic Calculation</b></label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation">Operation</label>
+        <select type="text" id="node-input-operation" style="width: auto;">
+            <option value="add">add</option>
+            <option value="sub">sub</option>
+            <option value="mul">mul</option>
+            <option value="div">div</option>
+            <option value="mod">mod</option>
+            <option value="inc">inc</option>
+            <option value="dec">dec</option>
+            <option value="min">min</option>
+            <option value="max">max</option>
+            <option value="abs">abs</option>
+            <option value="acos">acos</option>
+            <option value="acosh">acosh</option>
+            <option value="asin">asin</option>
+            <option value="asinh">asinh</option>
+            <option value="atan">atan</option>
+            <option value="cbrt">cbrt</option>
+            <option value="ceil">ceil</option>
+            <option value="cos">cos</option>
+            <option value="cosh">cosh</option>
+            <option value="exp">exp</option>
+            <option value="floor">floor</option>
+            <option value="log">log</option>
+            <option value="log10">log10</option>
+            <option value="log2">log2</option>
+            <option value="pow">pow</option>
+            <option value="rnd1">random 1</option>
+            <option value="rnd2">random 2</option>
+            <option value="round">round</option>
+            <option value="sin">sin</option>
+            <option value="sinh">sinh</option>
+            <option value="sqrt">sqrt</option>
+            <option value="tan">tan</option>
+            <option value="tanh">tanh</option>
+            <option value="trunc">trunc</option>
+            <option value="torad">to radians</option>
+            <option value="todeg">to degrees</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-vartype1">Operand-1</label>
+        <select type="text" id="node-input-vartype1" title="Operand1" style="width: auto;">
+            <option value="IA">IA</option>
+            <option value="QA">QA</option>
+            <option value="MA">MA</option>
+            <option value="C">C</option>
+            <option value="T">T</option>
+            <option value="#">#</option>
+            <option value="#C">#C</option>
+            <option value="#T">#T</option>
+        </select>
+        <input id="node-input-address1" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+        <label id="div-point1" style="width: auto;"><b>.</b></label>
+        <input id="node-input-index1" title="Index" value=0 input type="number" min="0" max="63" required style="width: auto;">
+        <select type="text" id="node-input-counter1" title="Counter Value" style="width: auto;">
+            <option value="CV">CV</option>
+            <option value="PV">PV</option>
+        </select>
+        <select type="text" id="node-input-timer1" title="Timer Value" style="width: auto;">
+            <option value="ET">ET</option>
+            <option value="PT">PT</option>
+        </select>
+        <input id="node-input-const1" title="Const Value" value=10 input type="text" required style="width: auto;">
+        <select type="text" id="node-input-timeu1" title="Time Unit" style="width: auto;">
+            <option value="ms">milisec.</option>
+            <option value="s">seconds</option>
+            <option value="m">minutes</option>
+            <option value="h">hours</option>
+            <option value="d">days</option>
+        </select>
+        <select type="text" id="node-input-fconst1" title="Math Constant" style="width: auto;">
+            <option value="PI">PI</option>
+            <option value="E">E</option>
+            <option value="LN2">LN2</option>
+            <option value="LN10">LN10</option>
+            <option value="LOG2E">LOG2E</option>
+            <option value="LOG10E">LOG10E</option>
+            <option value="SQRT2">SQRT2</option>
+            <option value="SQRT1_2">SQRT1_2</option>
+        </select>
+    </div>
+    <div id="div-operand2" class="form-row">
+        <label for="node-input-vartype2">Operand-2</label>
+        <select type="text" id="node-input-vartype2" title="Operand2" style="width: auto;">
+            <option value="IA">IA</option>
+            <option value="QA">QA</option>
+            <option value="MA">MA</option>
+            <option value="C">C</option>
+            <option value="T">T</option>
+            <option value="#">#</option>
+            <option value="#C">#C</option>
+            <option value="#T">#T</option>
+        </select>
+        <input id="node-input-address2" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+        <label id="div-point2" style="width: auto;"><b>.</b></label>
+        <input id="node-input-index2" title="Index" value=0 input type="number" min="0" max="63" required style="width: auto;">
+        <select type="text" id="node-input-counter2" title="Counter Value" style="width: auto;">
+            <option value="CV">CV</option>
+            <option value="PV">PV</option>
+        </select>
+        <select type="text" id="node-input-timer2" title="Timer Value" style="width: auto;">
+            <option value="ET">ET</option>
+            <option value="PT">PT</option>
+        </select>
+        <input id="node-input-const2" title="Const Value" value=10 input type="text" required style="width: auto;">
+        <select type="text" id="node-input-timeu2" title="Time Unit" style="width: auto;">
+            <option value="ms">milisec.</option>
+            <option value="s">seconds</option>
+            <option value="m">minutes</option>
+            <option value="h">hours</option>
+            <option value="d">days</option>
+        </select>
+        <select type="text" id="node-input-fconst2" title="Math Constant" style="width: auto;">
+            <option value="PI">PI</option>
+            <option value="E">E</option>
+            <option value="LN2">LN2</option>
+            <option value="LN10">LN10</option>
+            <option value="LOG2E">LOG2E</option>
+            <option value="LOG10E">LOG10E</option>
+            <option value="SQRT2">SQRT2</option>
+            <option value="SQRT1_2">SQRT1_2</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-vartype">Result</label>
+        <select type="text" id="node-input-vartype" title="Save To" style="width: auto;">
+            <option value="QA">QA</option>
+            <option value="MA">MA</option>
+            <option value="C">C</option>
+            <option value="T">T</option>
+        </select>
+        <input id="node-input-address" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+        <label style="width: auto;"><b>.</b></label>
+        <input id="node-input-index" title="Index" value=0 input type="number" min="0" max="63" required style="width: auto;">
+        <select type="text" id="node-input-counter" title="Counter" style="width: auto;">
+            <option value="PV">PV</option>
+        </select>
+        <select type="text" id="node-input-timer" title="Timer" style="width: auto;">
+            <option value="PT">PT</option>
+        </select>
+    </div>
+    <div id="div-tofix" class="form-row">
+        <label for="node-input-tofix">Fix-Decimal</label>
+        <input id="node-input-tofix" title="Number Decimal" value=0 input type="number" min="0" max="20" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" id="node-input-name" title="Give this node a name" placeholder="Name" style="width: auto;">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-math">
+    <p>HA Ladder Logic Calculation.</p>
+    <h3><b>Input:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>EN: Enable Input<dd>
+        <dd><b>True</b> performs calculation<dd>
+    </dl>
+    <h3><b>Output:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>ENO: Enable Output<dd>
+        <dd><b>False</b> on error<dd>
+    </dl>
+    <h3><b>Variable (Operand-1):</b></h3>
+        <dl class="message-properties">
+            <dt><b>IA</b> Analog-Input<span class="property-type">number</span></dt>
+            <dt><b>QA</b> Analog-Output<span class="property-type">number</span></dt>
+            <dt><b>MA</b> Analog-Memory<span class="property-type">number</span></dt>
+            <dt><b>T</b> Timer<span class="property-type">number</span></dt>
+            <dd><b>.ET</b> Elapsed Time in ms.</dd>
+            <dd><b>.PT</b> Preset in ms.</dd>
+            <dt><b>C</b> Counter<span class="property-type">number</span></dt>
+            <dd><b>.CV</b> Value</dd>
+            <dd><b>.PV</b> Preset</dd>
+            <dt><b>#</b> Number-Constant<span class="property-type">number</span></dt>
+            <dt><b>#C</b> Math-Constant<span class="property-type">number</span></dt>
+            <dt><b>#T</b> Timer-Constant<span class="property-type">number</span></dt>
+        </dl>
+    <h3><b>Variable (Operand-2):</b></h3>
+        <dl class="message-properties">
+            <dt><b>IA</b> Analog-Input<span class="property-type">number</span></dt>
+            <dt><b>QA</b> Analog-Output<span class="property-type">number</span></dt>
+            <dt><b>MA</b> Analog-Memory<span class="property-type">number</span></dt>
+            <dt><b>T</b> Timer<span class="property-type">number</span></dt>
+            <dd><b>.ET</b> Elapsed Time in ms.</dd>
+            <dd><b>.PT</b> Preset in ms.</dd>
+            <dt><b>C</b> Counter<span class="property-type">number</span></dt>
+            <dd><b>.CV</b> Value </dd>
+            <dd><b>.PV</b> Preset</dd>
+            <dt><b>#</b> Number-Constant<span class="property-type">number</span></dt>
+            <dt><b>#C</b> Math-Constant<span class="property-type">number</span></dt>
+            <dt><b>#T</b> Timer-Constant<span class="property-type">number</span></dt>
+        </dl>
+    <h3><b>Variable (Result):</b></h3>
+        <dl class="message-properties">
+            <dt><b>QA</b> Analog-Output<span class="property-type">number</span></dt>
+            <dt><b>MA</b> Analog-Memory<span class="property-type">number</span></dt>
+            <dt><b>T</b> Timer<span class="property-type">number</span></dt>
+            <dd><b>.PT</b> Preset in ms.</dd>
+            <dt><b>C</b> Counter<span class="property-type">number</span></dt>
+            <dd><b>.PV</b> Preset</dd>
+        </dl>
+    <h3><b>Details:</b></h3>
+    <p>
+        Calculates variables/constants.<br>
+        Variables must exist.<br>
+        Timer-Constant is converted to ms.<br>
+        Fix-Decimal rounds digits after decimal point.<br>
+        Status icon shows the output payload.<br>
+        Status text shows Result.<br>
+        <br>
+        <b>Calculation with one Operand:</b><br>
+        <ul>
+            <li><b>inc</b> increment by 1</li>
+            <li><b>dec</b> deccrement by 1</li>
+            <li><b>acos</b> arccosine</li>
+            <li><b>abs</b> absolute</li>
+            <li><b>acos</b> arccosine</li>
+            <li><b>acosh</b> hyperbolic arccosine</li>
+            <li><b>asin</b> arcsine</li>
+            <li><b>asinh</b> hyperbolic arcsine</li>
+            <li><b>atan</b> hyperbolic arctangent</li>
+            <li><b>cbrt</b> cube root</li>
+            <li><b>ceil</b> smallest integer greater than or equal</li>
+            <li><b>cos</b> cosine</li>
+            <li><b>cosh</b> hyperbolic cosine</li>
+            <li><b>exp</b> exponent to euler's constant</li>
+            <li><b>floor</b> largest integer less than or equal</li>
+            <li><b>log</b> natural logarithm</li>
+            <li><b>log10</b> base-10 logarithm</li>
+            <li><b>log2</b> base-2 logarithm</li>
+            <li><b>random1</b> random number one range</li>
+            <li><b>round</b> rounded to the nearest integer</li>
+            <li><b>sin</b> sine</li>
+            <li><b>sinh</b> hyperbolic sine</li>
+            <li><b>sqrt</b> square</li>
+            <li><b>tan</b> tangent</li>
+            <li><b>tanh</b> hyperbolic tangent</li>
+            <li><b>trunc</b> removing any fractional digits</li>
+            <li><b>torad</b> convert to radians</li>
+            <li><b>todeg</b> convert to degrees</li>
+        </ul>
+        <b>Calculation with two Operands:</b><br>
+        <ul>
+            <li><b>add</b> add</li>
+            <li><b>sub</b> subrtact</li>
+            <li><b>mul</b> multiple</li>
+            <li><b>div</b> divide</li>
+            <li><b>mod</b> remainder</li>
+            <li><b>min</b> minimum</li>
+            <li><b>max</b> maximum</li>
+            <li><b>pow</b> power</li>
+            <li><b>random2</b> random number two range</li>
+        </ul>
+    </p>
+</script>

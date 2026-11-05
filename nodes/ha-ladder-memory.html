@@ -1,0 +1,199 @@
+﻿<!--
+  Copyright 2024 Derya Y. (iot.HA Ladder@gmail.com).
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    const N_INDEX_M = 64;
+
+    RED.nodes.registerType('ha-ladder-m-memory', {
+        category: 'ha-ladder-sys',
+        color: '#6A9A8A',
+        paletteLabel: 'hal-M',
+        defaults: {
+            address:    { value: 0, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            persistent: { value: 0, required: true },
+            tupdate:    { value: 20,  required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 200); } },
+            meminit:    { value: [] }
+        },
+        inputs: 0,
+        outputs: 0,
+        icon: "font-awesome/fa-hdd-o",
+        label: "M memory",
+        oneditprepare: function () {
+            for (var idx = 0; idx < N_INDEX_M; idx++) {
+                $("#div-init").append('<div class="form-row">');
+                $("#div-init").append('<label for="init' + idx + '"> Index ' + idx + '</label>');
+                $("#div-init").append('<select id=init' + idx + ' title="Init Value" value=0 style="width: auto;">');
+                $("#init" + idx).append('<option value=0>false</option>');
+                $("#init" + idx).append('<option value=1>true</option>');
+                $("#div-init").append('</select>');
+                $("#div-init").append('</div>');
+            }
+
+            if (this.meminit.length > 0) {
+                for (var idx = 0; idx < N_INDEX_M; idx++)
+                    $("#init" + idx).val(this.meminit[idx] ? 1 : 0);
+            }
+
+            $("#node-input-persistent").on("change", function () {
+                this.value == 0 ? $("#div-tupdate").hide() : $("#div-tupdate").show();
+             }).change();
+        },
+        oneditsave: function () {
+            this.meminit = [];
+            for (var idx = 0; idx < N_INDEX_M; idx++)
+                this.meminit.push($("#init" + idx).val() > 0);
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-m-memory">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder Digital (M) Memory Variable</b></label>
+    </div>
+    <div class="form-row">
+        <label>Variable</label>
+        <label style="width: auto;"><b>M</b></label>
+        <input id="node-input-address" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-persistent">Persistent</label>
+        <select type="text" id="node-input-persistent" title="Persistent Memory" style="width: auto;">
+            <option value=0>Disabled</option>
+            <option value=1>Enabled</option>
+        </select>
+    </div>
+    <div id="div-tupdate" class="form-row">
+        <label for="node-input-tupdate">Update-Cycle</label>
+        <input id="node-input-tupdate" input type="number" min="1" max="200" required style="width: auto;">
+        <label for="node-input-tupdate"> s</label>
+    </div>
+    <label style="width:100%; border-bottom: 1px solid #a9a9a9;">Init-Values</label>
+    <div id="div-init" class="form-row"></div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-m-memory">
+    <p>HA Ladder Digital (M) Memory Variable.</p>
+    <h3><b>Variable:</b></h3>
+        <dl class="message-properties">
+            <dt><b>M</b> Digital-Memory<span class="property-type">boolean array</span></dt>
+        </dl>
+    <h3><b>Detail:</b></h3>
+    <p>
+        Creates Digital (M) Memory Variable.<br>
+        Variable is init with Init-Values.<br>
+        If Persistent is enabled:<br>
+        On start variable is loaded from file.<br>
+        File is updated on cycle<br>
+        and when variables are changed.<br>
+        Frequent updates can shorten<br>
+        the life of SD memory.<br>
+        Status icon shows save status.<br>
+        Status text shows variable.<br>
+    </p>
+</script>
+
+<script type="text/javascript">
+    const N_INDEX_MA = 64;
+
+    RED.nodes.registerType('ha-ladder-ma-memory', {
+        category: 'ha-ladder-sys',
+        color: '#6A9A8A',
+        paletteLabel: 'hal-MA',
+        defaults: {
+            address:    { value: 0, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            persistent: { value: 0, required: true },
+            tupdate:    { value: 20,  required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 200); } },
+            meminit:    { value: [] , validate: function(v) {
+                for (var i = 0; i < v.length; i++)
+                    if (isNaN(v[i]))
+                        return false;
+                return true;
+            } }
+        },
+        inputs: 0,
+        outputs: 0,
+        icon: "font-awesome/fa-hdd-o",
+        label: "MA memory",
+        oneditprepare: function () {
+            for (var idx = 0; idx < N_INDEX_MA; idx++) {
+                $("#div-init").append('<div class="form-row">');
+                $("#div-init").append('<label for="init' + idx + '"> Index ' + idx + '</label>');
+                $("#div-init").append('<input id=init' + idx + ' title="Init Value" value=0 style="width: auto;">');
+                $("#div-init").append('</div>');
+            }
+
+            if (this.meminit.length > 0) {
+                for (var idx = 0; idx < N_INDEX_MA; idx++)
+                    $("#init" + idx).val(this.meminit[idx]);
+            }
+
+            $("#node-input-persistent").on("change", function () {
+                this.value == 0 ? $("#div-tupdate").hide() : $("#div-tupdate").show();
+             }).change();
+        },
+        oneditsave: function () {
+            this.meminit = [];
+            for (var idx = 0; idx < N_INDEX_MA; idx++)
+                this.meminit.push($("#init" + idx).val());
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-ma-memory">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder Analog (MA) Memory Variable</b></label>
+    </div>
+    <div class="form-row">
+        <label>Variable</label>
+        <label style="width: auto;"><b>MA</b></label>
+        <input id="node-input-address" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-persistent">Persistent</label>
+        <select type="text" id="node-input-persistent" title="Persistent Memory" style="width: auto;">
+            <option value=0>Disabled</option>
+            <option value=1>Enabled</option>
+        </select>
+    </div>
+    <div id="div-tupdate" class="form-row">
+        <label for="node-input-tupdate">Update-Cycle</label>
+        <input id="node-input-tupdate" input type="number" min="1" max="200" required style="width: auto;">
+        <label for="node-input-tupdate"> s</label>
+    </div>
+    <label style="width:100%; border-bottom: 1px solid #a9a9a9;">Init-Values</label>
+    <div id="div-init" class="form-row"></div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-ma-memory">
+    <p>HA Ladder Digital (M) Memory Variable.</p>
+    <h3><b>Variable:</b></h3>
+        <dl class="message-properties">
+            <dt><b>MA</b> Analog-Memory<span class="property-type">number array</span></dt>
+        </dl>
+    <h3><b>Detail:</b></h3>
+    <p>
+        Creates Analog (MA) Memory Variable.<br>
+        Variable is init with Init-Values.<br>
+        If Persistent is enabled:<br>
+        On start variable is loaded from file.<br>
+        File is updated on cycle<br>
+        and when variables are changed.<br>
+        Frequent updates can shorten<br>
+        the life of SD memory.<br>
+        Status icon shows save status.<br>
+        Status text shows variable.<br>
+    </p>
+</script>

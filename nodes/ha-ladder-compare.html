@@ -1,0 +1,270 @@
+﻿<!--
+  Copyright 2024 Derya Y. (iot.HA Ladder@gmail.com).
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-compare', {
+        category: 'ha-ladder',
+        color: '#8F7AA3',
+        paletteLabel: 'hal-cmp',
+        defaults: {
+            operation: { value: "ge", required: true },
+
+            vartype1: { value: "IA", required: true },
+            address1: { value: 0, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            index1:   { value: 0, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 63); } },
+            counter1: { value: "CV", required: true },
+            timer1:   { value: "ET", required: true },
+
+            vartype2: { value: "#", required: true },
+            address2: { value: 0, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            index2:   { value: 0, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 63); } },
+            counter2: { value: "CV", required: true },
+            timer2:   { value: "ET", required: true },
+            timeu2:   { value: "s", required: true },
+            const2:   { value: 10, required: true, validate: function (v) { return !isNaN(Number(v)); } },
+
+            name:     { value: "" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: function () {
+            switch (this.operation) {
+                case "eq":  return "font-awesome/fa-check";
+                case "ne":  return "font-awesome/fa-times";
+                case "lt":  return "font-awesome/fa-chevron-left";
+                case "gt":  return "font-awesome/fa-chevron-right";
+                case "le":  return "font-awesome/fa-angle-double-left";
+                case "inc":  return "font-awesome/fa-sort-amount-asc";
+                case "dec":  return "font-awesome/fa-sort-amount-desc";
+                default:
+                case "ge":  return "font-awesome/fa-angle-double-right";
+            }
+        },
+        inputLabels: "(IN) boolean",
+        outputLabels: ["(OUT) boolean"],
+        label: function () {
+            if (this.name)
+                return this.name;
+            
+            var out_txt = this.operation + " ";
+
+            switch(this.vartype2) {
+                default:   out_txt += this.vartype2 + this.address2 + "." + this.index2; break;
+                case "C":  out_txt += this.vartype2 + this.address2 + "." + this.counter2; break; 
+                case "T":  out_txt += this.vartype2 + this.address2 + "." + this.timer2; break; 
+                case "#":  out_txt += String(this.const2); break;
+                case "#T": out_txt += this.const2 + this.timeu2; break; 
+            }
+            return out_txt;
+        },
+        labelStyle: function() { return this.name ? "node_label_italic" : ""; },
+        oneditprepare: function () {
+            function onvartype1(vartype) {
+                $("#node-input-index1").hide();
+                $("#node-input-counter1").hide();
+                $("#node-input-timer1").hide();
+
+                switch (vartype) {
+                    default:
+                        $("#node-input-index1").show();
+                        break;
+                    case "C":  
+                        $("#node-input-counter1").show();
+                        break;
+                    case "T":  
+                        $("#node-input-timer1").show();
+                        break;
+                }
+            }
+
+            function onvartype2(vartype) {
+                $("#node-input-address2").hide();
+                $("#div-point2").hide();
+                $("#node-input-index2").hide();
+                $("#node-input-counter2").hide();
+                $("#node-input-timer2").hide();
+                $("#node-input-timeu2").hide();
+                $("#node-input-const2").hide();
+
+                switch (vartype) {
+                    default:
+                        $("#node-input-address2").show();
+                        $("#div-point2").show();
+                        $("#node-input-index2").show();
+                        break;
+                    case "C":  
+                        $("#node-input-address2").show();
+                        $("#div-point2").show();
+                        $("#node-input-counter2").show();
+                        break;
+                    case "T":  
+                        $("#node-input-address2").show();
+                        $("#div-point2").show();
+                        $("#node-input-timer2").show();
+                        break;
+                    case "#":  
+                        $("#node-input-const2").show();
+                        break;
+                    case "#T": 
+                        $("#node-input-const2").show();
+                        $("#node-input-timeu2").show();
+                        break;
+                }
+            }
+
+            $("#node-input-vartype1").on("change", function () { onvartype1(this.value); }).change();
+            $("#node-input-vartype2").on("change", function () { onvartype2(this.value); }).change();
+        },
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-compare">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder Logic Compare Contact</b></label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation">Operation</label>
+        <select type="text" id="node-input-operation" style="width: auto;">
+            <option value="eq">=</option>
+            <option value="ne">&lt;&gt;</option>
+            <option value="lt">&lt;</option>
+            <option value="gt">&gt;</option>
+            <option value="le">&lt;=</option>
+            <option value="ge">&gt;=</option>
+            <option value="inc">increase</option>
+            <option value="dec">decrease</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-vartype1">Operand-1</label>
+        <select type="text" id="node-input-vartype1" title="Operand1" style="width: auto;">
+            <option value="IA">IA</option>
+            <option value="QA">QA</option>
+            <option value="MA">MA</option>
+            <option value="C">C</option>
+            <option value="T">T</option>
+        </select>
+        <input id="node-input-address1" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+        <label style="width: auto;"><b>.</b></label>
+        <input id="node-input-index1" title="Index" value=0 input type="number" min="0" max="63" required style="width: auto;">
+        <select type="text" id="node-input-counter1" title="Counter Value" style="width: auto;">
+            <option value="CV">CV</option>
+            <option value="PV">PV</option>
+        </select>
+        <select type="text" id="node-input-timer1" title="Timer Value" style="width: auto;">
+            <option value="ET">ET</option>
+            <option value="PT">PT</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-vartype2">Operand-2</label>
+        <select type="text" id="node-input-vartype2" title="Operand2" style="width: auto;">
+            <option value="IA">IA</option>
+            <option value="QA">QA</option>
+            <option value="MA">MA</option>
+            <option value="C">C</option>
+            <option value="T">T</option>
+            <option value="#">#</option>
+            <option value="#T">#T</option>
+        </select>
+        <input id="node-input-address2" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+        <label id="div-point2" style="width: auto;"><b>.</b></label>
+        <input id="node-input-index2" title="Index" value=0 input type="number" min="0" max="63" required style="width: auto;">
+        <select type="text" id="node-input-counter2" title="Counter Value" style="width: auto;">
+            <option value="CV">CV</option>
+            <option value="PV">PV</option>
+        </select>
+        <select type="text" id="node-input-timer2" title="Timer Value" style="width: auto;">
+            <option value="ET">ET</option>
+            <option value="PT">PT</option>
+        </select>
+        <input id="node-input-const2" title="Const Value" value=10 input type="text" required style="width: auto;">
+        <select type="text" id="node-input-timeu2" title="Time Unit" style="width: auto;">
+            <option value="ms">milisec.</option>
+            <option value="s">seconds</option>
+            <option value="m">minutes</option>
+            <option value="h">hours</option>
+            <option value="d">days</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" id="node-input-name" title="Give this node a name" placeholder="Name" style="width: auto;">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-compare">
+    <p>HA Ladder Logic Compare Contact.</p>
+    <h3><b>Input:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>IN<dd>
+        </dl>
+    <h3><b>Output:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>OUT<dd>
+        </dl>
+    <h3><b>Variable (Operand-1):</b></h3>
+        <dl class="message-properties">
+            <dt><b>IA</b> Analog-Input<span class="property-type">number</span></dt>
+            <dt><b>QA</b> Analog-Output<span class="property-type">number</span></dt>
+            <dt><b>MA</b> Analog-Memory<span class="property-type">number</span></dt>
+            <dt><b>T</b> Timer<span class="property-type">number</span></dt>
+            <dd><b>.ET</b> Elapsed Time in ms.</dd>
+            <dd><b>.PT</b> Preset in ms.</dd>
+            <dt><b>C</b> Counter<span class="property-type">number</span></dt>
+            <dd><b>.CV</b> Value</dd>
+            <dd><b>.PV</b> Preset</dd>
+        </dl>
+    <h3><b>Variable (Operand-2):</b></h3>
+        <dl class="message-properties">
+            <dt><b>IA</b> Analog-Input<span class="property-type">number</span></dt>
+            <dt><b>QA</b> Analog-Output<span class="property-type">number</span></dt>
+            <dt><b>MA</b> Analog-Memory<span class="property-type">number</span></dt>
+            <dt><b>T</b> Timer<span class="property-type">number</span></dt>
+            <dd><b>.ET</b> Elapsed Time in ms.</dd>
+            <dd><b>.PT</b> Preset in ms.</dd>
+            <dt><b>C</b> Counter<span class="property-type">number</span></dt>
+            <dd><b>.CV</b> Value </dd>
+            <dd><b>.PV</b> Preset</dd>
+            <dt><b>#</b> Number-Constant<span class="property-type">number</span></dt>
+            <dt><b>#T</b> Timer-Constant<span class="property-type">number</span></dt>
+        </dl>
+    <h3><b>Detail:</b></h3>
+    <p>
+        Compares operands.<br>
+        If compare is <b>True</b><br> 
+        the input is passed through output,<br> 
+        else output is <b>False</b><br>
+        All Variables must exist.<br>
+        Timer-Constant is converted to ms.<br>
+        Status icon shows the output payload.<br>
+        Status text shows Operand-1.<br>
+        <br>
+        <b>Operation:</b>
+        <ul>
+            <li><b>==</b> Operand-1 equal Operand-2.</li>
+            <li><b>&lt;&gt;</b> Operand-1 not equal Operand-2.</li>
+            <li><b>&lt;</b> Operand-1 lower Operand-2.</li>
+            <li><b>&gt;</b> Operand-1 greater Operand-2.</li>
+            <li><b>&lt;=</b> Operand-1 lower-equal Operand-2.</li>
+            <li><b>&gt;=</b> Operand-1 greater-equal Operand-2.</li>
+            <li><b>increase</b> Operand-1 increases by Operand-2.</li>
+            <li><b>decrease</b> Operand-1 decreases by Operand-2.</li>
+        </ul>
+    </p>
+</script>

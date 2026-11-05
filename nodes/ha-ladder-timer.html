@@ -1,0 +1,144 @@
+﻿<!--
+  Copyright 2024 Derya Y. (iot.HA Ladder@gmail.com).
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-timer', {
+        category: 'ha-ladder',
+        color: '#B89A6A',
+        paletteLabel: 'hal-tmr',
+        defaults: {
+            operation:  { value: "TON", required: true },
+            address:    { value: 0, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            timev:      { value: 10, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 1); } },
+            timeu:      { value: "s", required: true },
+            persistent: { value: 0, required: true },
+            tpers:      { value: 20, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 200); } },
+            name:       { value: "" },
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-clock-o", 
+        align: 'left',
+        inputLabels: "(IN) boolean",
+        outputLabels: ["(Q) boolean"],
+        label: function () { return this.name || (this.operation + " " + this.timev + this.timeu); },
+        labelStyle: function() { return this.name ? "node_label_italic" : ""; },
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-timer">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder Logic Timer Coil</b></label>
+    </div>
+    <div id="div-operation" class="form-row">
+        <label for="node-input-operation">Operation</label>
+        <select type="text" id="node-input-operation" style="width: auto;">
+            <option value="TON">On Delay (TON)</option>
+            <option value="TOF">Off Delay (TOF)</option>
+            <option value="TP">One Pulse (TP)</option>
+            <option value="TPI">Interval Pulse (TPI)</option>
+            <option value="TONR">Retentive On Delay (TONR)</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label>Timer</label>
+        <label style="width: auto;"><b>T</b></label>
+        <input id="node-input-address" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-timev">Time</label>
+        <input id="node-input-timev" title="Time" value=10 input type="number" min="1" required style="width: auto;">
+        <select type="text" id="node-input-timeu" title="Time Unit" style="width: auto;">
+            <option value="ms">milisec.</option>
+            <option value="s">seconds</option>
+            <option value="m">minutes</option>
+            <option value="h">hours</option>
+            <option value="d">days</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" id="node-input-name" title="Give this node a name" title="Name" style="width: auto;">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-timer">
+    <p>HA Ladder Logic Timer Coil.</p>
+    <h3><b>Input:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>IN: Timer Input<dd>
+    </dl>
+    <h3><b>Output:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>Q: Timer Output<dd>
+    </dl>
+    <h3><b>Variable (Timer):</b></h3>
+        <dl class="message-properties">
+            <dt><b>T</b> Timer-Value<span class="property-type">number</span></dt>
+            <dd><b>.ET</b> Elapsed Time in ms (readonly).</dd>
+            <dd><b>.PT</b> Timer Preset in ms.</dd>
+            <dt><b>T</b> Timer-Status<span class="property-type">boolean</span></dt>
+            <dd><b>.Q</b> Timer Output</dd>
+            <dd><b>.TT</b> Timer Timed (run)</dd>
+            <dt><b>T</b> Timer-Control<span class="property-type">boolean</span></dt>
+            <dd><b>.R</b> Timer Reset (only TONR)</dd>
+        </dl>
+    <h3><b>Details:</b></h3>
+    <p>
+        Implements timer coil.<br>
+        Variable is created and must unique.<br>
+        Entered preset time is converted into ms.<br>
+        Changes to <b>.PT</b> efects on start of timer.<br>
+        If <b>.PT</b> ist changed to <= 0,<br>
+        then <b>.PT</b> is set to entered preset.<br>
+        Status icon shows <b>.Q</b>.<br>
+        Status text shows <b>.ET</b>.<br>
+        <br>
+        <b>Operation:</b>
+        <ul>
+            <li><b>On Delay (TON):</b><br>
+                Sets <b>.Q</b> after elapsed time period.<br>
+                Positve transition on input starts timer.<br>
+                Input <b>False</b> stops timer.<br>
+            </li>
+            <li><b>Off Delay (TOF):</b><br>
+                Resets <b>.Q</b> after elapsed time period.<br>
+                Negative transition on input starts timer.<br>
+                Input <b>True</b> stops timer.<br>
+            </li>
+            <li><b>One Pulse (TP):</b><br>
+                Pulse <b>.Q</b> for a time period.<br>
+                Positve transition on input starts timer.<br>
+                If timer started, input is ignored.<br>
+            </li>
+            <li><b>Interval Pulse (TPI):</b><br>
+                Pulse <b>.Q</b> on interval (blink).<br>
+                Positve transition on input starts interval.<br>
+                Input <b>False</b> stops interval.<br>
+            </li>
+            <li><b>Retentive On Delay (TONR):</b><br>
+                Sets <b>.Q</b> after elapsed time period.<br>
+                Positve transition on input starts timer.<br>
+                If timer started,<br>
+                timer is paused on input <b>False</b><br> 
+                and continues on <b>True</b>.<br>
+                <b>.R</b> resets elapsed time to 0.<br>
+            </li>
+        </ul>
+    </p>
+</script>

@@ -1,0 +1,49 @@
+{
+  "name": "node-red-contrib-ha-ladder",
+  "version": "0.1.0",
+  "description": "Ladder logic for Node-RED with Home Assistant entities as I/Q (fork of @redplc/node-red-redplc)",
+  "license": "Apache-2.0",
+  "keywords": [
+    "node-red",
+    "home-assistant",
+    "ladder",
+    "plc",
+    "iec-61131",
+    "ha-ladder"
+  ],
+  "node-red": {
+    "version": ">=2.0.0",
+    "nodes": {
+      "ha-ladder-contact": "nodes/ha-ladder-contact.js",
+      "ha-ladder-coil": "nodes/ha-ladder-coil.js",
+      "ha-ladder-function": "nodes/ha-ladder-function.js",
+      "ha-ladder-counter": "nodes/ha-ladder-counter.js",
+      "ha-ladder-timer": "nodes/ha-ladder-timer.js",
+      "ha-ladder-flipflop": "nodes/ha-ladder-flipflop.js",
+      "ha-ladder-move": "nodes/ha-ladder-move.js",
+      "ha-ladder-math": "nodes/ha-ladder-math.js",
+      "ha-ladder-scale": "nodes/ha-ladder-scale.js",
+      "ha-ladder-compare": "nodes/ha-ladder-compare.js",
+      "ha-ladder-sys": "nodes/ha-ladder-sys.js",
+      "ha-ladder-memory": "nodes/ha-ladder-memory.js"
+    }
+  },
+  "peerDependencies": {
+    "node-red-contrib-home-assistant-websocket": ">=0.50.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ricard0g0mes/node-red-contrib-ha-ladder.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ricard0g0mes/node-red-contrib-ha-ladder/issues"
+  },
+  "homepage": "https://github.com/ricard0g0mes/node-red-contrib-ha-ladder#readme",
+  "author": {
+    "name": "Ricardo Gomes",
+    "url": "https://ricardogomes.eu"
+  },
+  "contributors": [
+    "Derya Y. / Ocean (redPlc upstream) <iot.redplc@gmail.com>"
+  ]
+}

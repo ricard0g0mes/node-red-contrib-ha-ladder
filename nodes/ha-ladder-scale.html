@@ -1,0 +1,150 @@
+﻿<!--
+  Copyright 2024 Derya Y. (iot.HA Ladder@gmail.com).
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ha-ladder-scale', {
+        category: 'ha-ladder',
+        color: '#A38F6A',
+        paletteLabel: 'hal-scl',
+        defaults: {
+            vartype1: { value: "IA", required: true },
+            address1: { value: 0, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            index1:   { value: 0, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 63); } },
+
+            vartype2: { value: "MA", required: true },
+            address2: { value: 0, required: true, validate: function(v) { return RED.validators.number(v) && (v >= 0) && (v <= 999); } },
+            index2:   { value: 0, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 63); } },
+
+            const1:   { value: 0, required: true, validate: function (v) { return !isNaN(Number(v)); } },
+            const2:   { value: 10, required: true, validate: function (v) { return !isNaN(Number(v)); } },
+            const3:   { value: 0, required: true, validate: function (v) { return !isNaN(Number(v)); } },
+            const4:   { value: 100, required: true, validate: function (v) { return !isNaN(Number(v)); } },
+
+            tofix:    { value: 2, required: true, validate: function (v) { return RED.validators.number(v) && (v >= 0) && (v <= 20); } },
+            clamp:    { value: false },
+            name:     { value: "" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-sliders",
+        inputLabels: "(EN) boolean",
+        outputLabels: ["(ENO) boolean"],
+        labelStyle: function() { return this.name ? "node_label_italic" : ""; },
+        label: function () {
+            if (this.name)
+                return this.name;
+
+            return "scl " + this.vartype1 + this.address1 + "." + this.index1;
+        },
+    });
+</script>
+
+<script type="text/html" data-template-name="ha-ladder-scale">
+    <div class="form-row">
+        <label style="width:100%; border-bottom: 2px solid rgb(0, 0, 0);"><b>HA Ladder Logic Scale</b></label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-vartype1">Input</label>
+        <select type="text" id="node-input-vartype1" title="Move From" style="width: auto;">
+            <option value="IA">IA</option>
+            <option value="QA">QA</option>
+            <option value="MA">MA</option>
+        </select>
+        <input id="node-input-address1" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+        <label id="div-point" style="width: auto;"><b>.</b></label>
+        <input id="node-input-index1" title="Index" value=0 input type="number" min="0" max="63" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-vartype2">Output</label>
+        <select type="text" id="node-input-vartype2" title="Move To" style="width: auto;">
+            <option value="MA">MA</option>
+            <option value="QA">QA</option>
+        </select>
+        <input id="node-input-address2" title="Address" value=0 input type="number" min="0" max="999" required style="width: auto;">
+        <label style="width: auto;"><b>.</b></label>
+        <input id="node-input-index2" title="Index" value=0 input type="number" min="0" max="63" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-const1">Input-Min</label>
+        <input id="node-input-const1" title="Input-Min Const Value" input type="text" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-const2">Input-Max</label>
+        <input id="node-input-const2" title="Input-Max Const Value" input type="text" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-const3">Output-Min</label>
+        <input id="node-input-const3" title="Output-Min Const Value" input type="text" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-const4">Output-Min</label>
+        <input id="node-input-const4" title="Output-Min Const Value" input type="text" required style="width: auto;">
+    </div>
+    <div id="div-tofix" class="form-row">
+        <label for="node-input-tofix">Fix-Decimal</label>
+        <input id="node-input-tofix" title="Number Decimal" value=0 input type="number" min="0" max="20" required style="width: auto;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-clamp">Clamp-Input</label>
+        <input type="checkbox" id="node-input-clamp" title="Clamp Input" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" id="node-input-name" title="Give this node a name" placeholder="Name" style="width: auto;">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="ha-ladder-scale">
+    <p>HA Ladder Logic Scale.</p>
+    <h3><b>Input:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>EN: Enable Input<dd>
+        <dd><b>True</b> performs scale<dd>
+    </dl>
+    <h3><b>Output:</b></h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">boolean</span></dt>
+        <dd>ENO: Enable Output<dd>
+    </dl>
+    <h3><b>Input:</b></h3>
+        <dl class="message-properties">
+            <dt><b>IA</b> Analog-Input<span class="property-type">number</span></dt>
+            <dt><b>QA</b> Analog-Output<span class="property-type">number</span></dt>
+            <dt><b>MA</b> Analog-Memory<span class="property-type">number</span></dt>
+        </dl>
+    <h3><b>Output:</b></h3>
+        <dl class="message-properties">
+            <dt><b>QA</b> Analog-Output<span class="property-type">number</span></dt>
+            <dt><b>MA</b> Analog-Memory<span class="property-type">number</span></dt>
+        </dl>
+    <h3><b>Detail:</b></h3>
+    <p>
+        Scales input to output.<br>
+        Variables must exist.<br>
+        Input-Max must > Input-Min.<br>
+        Output-Min must > Output-Min.<br>
+        Fix-Decimal rounds digits after decimal point.<br>
+        Clamp-Input ajust input to Input-Max/Min.<br>
+        Status icon shows output payload.<br>
+        Status text shows Output.<br>
+        <b>Scale calculation formula:</b><br>
+        Factor = (Output-Min - Output-Min)<br>
+        / (Input-Max - Input-Min)<br>
+        Offset = Output-Min - (Input-Min * Factor)<br>
+        Output = Input * Factor + Offset<br>
+    </p>
+</script>
