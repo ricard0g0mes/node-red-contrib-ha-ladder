@@ -1,6 +1,8 @@
 # node-red-contrib-ha-ladder
 
-Ladder logic (estilo IEC 61131-3) para **Node-RED**, com **entidades do Home Assistant** como entradas/saídas digitais.
+**[English](#english)** · **[Português](#português)**
+
+Ladder logic (IEC 61131-3 style) for **Node-RED**, using **Home Assistant entities** as digital inputs/outputs.
 
 Palette: **`ha-ladder`** / **`ha-ladder-sys`**.
 
@@ -8,16 +10,16 @@ Palette: **`ha-ladder`** / **`ha-ladder-sys`**.
 
 ## Attribution / Based on redPlc
 
-Este pacote é um **fork/adaptação** do trabalho excelente do **redPlc**:
+This package is a **fork/adaptation** of the excellent **redPlc** work:
 
-- Pacote original: [`@redplc/node-red-redplc`](https://www.npmjs.com/package/@redplc/node-red-redplc)
-- Repositório: **https://github.com/redplc/redplc**
-- Licença: **Apache-2.0** (mantida neste fork)
+- Original package: [`@redplc/node-red-redplc`](https://www.npmjs.com/package/@redplc/node-red-redplc)
+- Repository: **https://github.com/redplc/redplc**
+- License: **Apache-2.0** (kept in this fork)
 
-A maior parte da lógica de ladder (scan, rail, contact/coil modes, function, counter, timer, flipflop, move, math, scale, compare, memória `M`/`MA`) vem do redPlc.  
-Este fork altera sobretudo o **I/O**: em vez de GPIO/`I`/`Q`, o contact/coil falam com **entidades HA**.
+Most of the ladder logic (scan, rail, contact/coil modes, function, counter, timer, flipflop, move, math, scale, compare, `M`/`MA` memory) comes from redPlc.  
+This fork mainly changes **I/O**: instead of GPIO / `I` / `Q`, contact/coil talk to **HA entities**.
 
-Se usas ladder no Node-RED, apoia também o projecto original: [redplc/redplc](https://github.com/redplc/redplc).
+If you use ladder in Node-RED, please also support the upstream project: [redplc/redplc](https://github.com/redplc/redplc).
 
 ---
 
@@ -28,6 +30,137 @@ Website: https://ricardogomes.eu
 If this saved you time/pain: https://buymeacoffee.com/ricard0g0mes
 
 ---
+
+<a id="english"></a>
+
+# English
+
+## What changes vs redPlc
+
+| redPlc | HA Ladder |
+|--------|-----------|
+| `I` / `Q` via GPIO modules | HA entities on **contact** / **coil** |
+| `import` / `export` | Not needed for digital HA I/O |
+| Addresses like `M0.0` as external I/O | `entity_id` such as `light.luz_escritorio` |
+| redPlc colors/icons | Own colors + Font Awesome icons (`hal-*`) |
+
+Internal memory (`M`, `T`, `C`, `FF`, …) is **kept** for intermediate ladder bits.
+
+## Requirements
+
+- Node-RED ≥ 2
+- [`node-red-contrib-home-assistant-websocket`](https://github.com/zachowj/node-red-contrib-home-assistant-websocket) (already included in the official HA addon)
+- HA Server node configured and **connected** (reads state from WS cache / `global.homeassistant`)
+
+## Install
+
+### Option A — Home Assistant Node-RED addon
+
+1. Copy the package folder to:
+   ```
+   /addon_configs/<slug>_nodered/node_modules/node-red-contrib-ha-ladder
+   ```
+   (or your addon’s `node_modules` path)
+2. **Restart** the Node-RED addon
+3. In the palette: categories **`ha-ladder`** and **`ha-ladder-sys`**
+
+### Option B — npm (when published)
+
+```bash
+cd ~/.node-red
+npm install node-red-contrib-ha-ladder
+```
+
+Restart Node-RED.
+
+### Option C — from this repo
+
+```bash
+git clone https://github.com/ricard0g0mes/node-red-contrib-ha-ladder.git
+cd ~/.node-red
+npm install /path/to/node-red-contrib-ha-ladder
+```
+
+## Nodes (summary)
+
+### System (`ha-ladder-sys`)
+
+| Palette | Node | Role |
+|---------|------|------|
+| `hal-scan` | Scan inject | Scan cycle (PLC-style) |
+| `hal-boot` | On start | Pulse on startup |
+| `hal-1st` | First scan | First cycle |
+| `hal-rail` | Rail | Left/right rail |
+| `hal-M` / `hal-MA` | Memory | Boolean / analog memory |
+
+### Ladder (`ha-ladder`)
+
+| Palette | Node | Role |
+|---------|------|------|
+| `hal-in` | Contact | Input: HA entity **or** memory |
+| `hal-out` | Coil | Output: HA entity **or** memory |
+| `hal-fn` | Function | AND/OR/XOR/NOT/triggers… |
+| `hal-cnt` | Counter | Counter |
+| `hal-tmr` | Timer | Timer |
+| `hal-ff` | Flipflop | SR/RS/L/T |
+| `hal-mov` | Move | Copy values |
+| `hal-math` | Math | Arithmetic |
+| `hal-scl` | Scale | Scale |
+| `hal-cmp` | Compare | Comparisons |
+
+## Contact / Coil with Home Assistant
+
+### Contact (`hal-in`)
+
+- **Source `ha`**: pick **HA Server** + `entity_id`
+  - “On-like” states: `on`, `home`, `open`, `unlocked`, `playing`, `true`, `1`
+  - `event.*`: treats event state change as a pulse
+- **Source `mem`**: ladder memory (`M`, …) like redPlc
+- Operations: NO / NC / P (rising) / N (falling)
+
+### Coil (`hal-out`)
+
+- **Source `ha`**: calls HA services (`turn_on` / `turn_off`, or `lock`/`cover` by domain)
+- **Source `mem`**: writes a memory bit
+- Modes: Store, Set, Reset, etc. (from redPlc)
+
+State reads: HA websocket client cache or `global.homeassistant`.  
+Writes: `callService` on the same client. **No Supervisor hacks.**
+
+## Minimal example
+
+Goal: `input_boolean.…` → `light.…`
+
+1. `hal-scan` → `hal-rail` (left)
+2. `hal-in` (contact) → source **ha**, entity `input_boolean.maquina_lavar_loica_em_ciclo`
+3. `hal-out` (coil) → source **ha**, entity `light.luz_escritorio`, Store mode
+4. Deploy; ensure the HA Server is Connected
+
+Typical flow: **scan → rail → contact → coil**.
+
+## Notes / limitations
+
+- Contact is **synchronous in the scan**: needs state already cached. If the HA server is not connected, the contact stays “mute”.
+- Not a replacement for complex HA automations; digital ladder + memory, with HA as I/O.
+- Visuals differ from redPlc on purpose (colors + Font Awesome) so the palette is not confusing.
+
+## License
+
+Apache-2.0 — see [LICENSE](./LICENSE).  
+Original redPlc copyright: Derya Y. / Ocean — see commits and file headers.  
+HA Ladder modifications: Ricardo Gomes, 2026.
+
+## Links
+
+- This repo: https://github.com/ricard0g0mes/node-red-contrib-ha-ladder
+- redPlc (upstream): https://github.com/redplc/redplc
+- Author: https://ricardogomes.eu · [Buy me a coffee](https://buymeacoffee.com/ricard0g0mes)
+
+---
+
+<a id="português"></a>
+
+# Português
 
 ## O que muda face ao redPlc
 
@@ -40,15 +173,11 @@ If this saved you time/pain: https://buymeacoffee.com/ricard0g0mes
 
 Memória interna (`M`, `T`, `C`, `FF`, …) **mantém-se** para bits intermédios do ladder.
 
----
-
 ## Requisitos
 
 - Node-RED ≥ 2
 - [`node-red-contrib-home-assistant-websocket`](https://github.com/zachowj/node-red-contrib-home-assistant-websocket) (já vem no addon oficial HA)
 - Server node HA configurado e **ligado** (lê estado do cache WS / `global.homeassistant`)
-
----
 
 ## Instalação
 
@@ -79,8 +208,6 @@ cd ~/.node-red
 npm install /caminho/para/node-red-contrib-ha-ladder
 ```
 
----
-
 ## Nodes (resumo)
 
 ### Sistema (`ha-ladder-sys`)
@@ -108,8 +235,6 @@ npm install /caminho/para/node-red-contrib-ha-ladder
 | `hal-scl` | Scale | Escala |
 | `hal-cmp` | Compare | Comparações |
 
----
-
 ## Contact / Coil com Home Assistant
 
 ### Contact (`hal-in`)
@@ -129,8 +254,6 @@ npm install /caminho/para/node-red-contrib-ha-ladder
 Leitura de estado: cache do cliente websocket HA ou `global.homeassistant`.  
 Escrita: `callService` do mesmo cliente. **Sem hacks ao Supervisor.**
 
----
-
 ## Exemplo mínimo
 
 Objectivo: `input_boolean.…` → `light.…`
@@ -142,23 +265,17 @@ Objectivo: `input_boolean.…` → `light.…`
 
 Fluxo típico: **scan → rail → contact → coil**.
 
----
-
 ## Notas / limitações
 
 - Contact é **síncrono no scan**: precisa de estado já em cache. Se o server HA não estiver ligado, o contact fica “mudo”.
 - Não substitui automações HA complexas; é ladder digital + memória, com HA como I/O.
 - Visual diferente do redPlc de propósito (cores + Font Awesome), para não confundir na palette.
 
----
-
 ## Licença
 
 Apache-2.0 — ver [LICENSE](./LICENSE).  
 Copyright original redPlc: Derya Y. / Ocean — ver commits e cabeçalhos nos ficheiros.  
 Modificações HA Ladder: Ricardo Gomes, 2026.
-
----
 
 ## Links
 
