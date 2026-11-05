@@ -1,7 +1,7 @@
 # node-red-contrib-ha-ladder
 
-![platform](https://img.shields.io/badge/platform-Node--RED-red)
-![platform](https://img.shields.io/badge/platform-Home%20Assistant-41BDF5)
+[![platform](https://img.shields.io/badge/platform-Node--RED-red)](https://nodered.org)
+[![platform](https://img.shields.io/badge/platform-Home%20Assistant-41BDF5)](https://www.home-assistant.io)
 
 <a href="https://www.buymeacoffee.com/ricard0g0mes"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-red.png" alt="Buy me a coffee" width="200"></a>
 
